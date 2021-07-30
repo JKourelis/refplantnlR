@@ -41,7 +41,7 @@ The first step is to load our domain architecture data file and do some basic fi
 
 ### Data loading
 
-First read in your domain file output from NLRtracker. You can do that with `read.delim()`. Minimally it should contain the gene ID, the log fold change and the $p$-value.
+First read in your domain file output from NLRtracker. You can do that with `read.delim()`. Must contain a minimum of one "CHAIN" as data$type.
 
 ```{r, message=FALSE}
 library(dplyr)

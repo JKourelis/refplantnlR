@@ -32,8 +32,7 @@ basic filtering
 ### Data loading
 
 First read in your domain file output from NLRtracker. You can do that
-with `read.delim()`. Minimally it should contain the gene ID, the log
-fold change and the *p*-value.
+with `read.delim()`. Must contain a minimum of one “CHAIN” as data$type.
 
 ``` r
 library(dplyr)
