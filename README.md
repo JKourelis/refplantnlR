@@ -18,7 +18,7 @@ RStudio type
 install.packages("devtools")
 ```
 
-Once `devtools` is installed you can use that to install `mogo`
+Once `devtools` is installed you can use that to install `refplantnlR`
 
 ``` r
 devtools::install_github("JKourelis/refplantnlR")
