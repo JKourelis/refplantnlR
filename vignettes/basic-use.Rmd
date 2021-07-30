@@ -51,13 +51,13 @@ head(filtered_RefPlantNLR)
 
 We can now draw the domain architecture 
 
-```{r, message=FALSE, fig.height=12, fig.width=12}
+```{r, message=FALSE, fig.height=12, fig.width=18}
 p <- draw_nlr(filtered_RefPlantNLR)
 p
 ```
 We can modify the output to also plot the NB-ARC motifs
 
-```{r, message=FALSE, fig.height=5, fig.width=10}
+```{r, message=FALSE, fig.height=5, fig.width=18}
 filtered_RefPlantNLR <- filter(RefPlantNLR, Subclass == "CCR-NLR")
 p <- draw_nlr(filtered_RefPlantNLR, label_motifs = TRUE)
 p
@@ -65,7 +65,7 @@ p
 
 Finally, specifically for the RefPlantNLR dataset we can also label the individual LRRs
 
-```{r, message=FALSE, fig.height=8, fig.width=10}
+```{r, message=FALSE, fig.height=8, fig.width=18}
 filtered_RefPlantNLR <- filter(RefPlantNLR, Subclass == "CCG10-NLR")
 p <- draw_nlr(filtered_RefPlantNLR, label_repeats = TRUE)
 p
