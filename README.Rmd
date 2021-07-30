@@ -68,6 +68,7 @@ We can now draw the domain architecture
 p <- draw_nlr(filtered_RefPlantNLR)
 p
 ```
+
 We can modify the output to also plot the NB-ARC motifs
 
 ```{r, message=FALSE, fig.height=5, fig.width=18}
@@ -83,3 +84,138 @@ filtered_RefPlantNLR <- filter(RefPlantNLR, Subclass == "CCG10-NLR")
 p <- draw_nlr(filtered_RefPlantNLR, label_repeats = TRUE)
 p
 ```
+
+### Oher types of analysis
+
+With the prepackaged NLRtracker output from all plant NCBI RefSeq proteomes we can do some additional analysis besides plotting the domain architecture. For example we can plot the number of NLR loci that contain potential integratd domains
+
+```{r, message=FALSE}
+library(tidyverse)
+
+# The dataset
+RefSeq_NLR <- RefSeq_NLR
+
+## Filtering to select a single splice-variant per locus, prioritizing the ones with integrated domains
+RefSeq_NLR_LOCUS <- RefSeq_NLR %>%
+  filter(Status %in% c("NLR", "degenerate NLR")) %>% # Select only NLRs
+  mutate(ID = case_when(str_detect(Domain_simplified, "O") ~ "YES", # Add a column for whether the NLR contains a putative integrated domain
+                        TRUE ~ "NO")) %>%
+  group_by(RefSeq, Locus) %>%
+  arrange(desc(ID),
+          desc(Status)) %>%
+  slice(1) %>% # Select a single splice-variant per locus
+  ungroup %>%
+  filter(!grepl("SUPPRESSED", Species)) %>% # Remove the suppressed RefSeq genomes
+  group_by(RefSeq, Species, ID) %>%
+  summarise(count = n()) %>% 
+  mutate(perc = (count/sum(count))*100)
+
+head(RefSeq_NLR_LOCUS)
+  
+ggplot(data = RefSeq_NLR_LOCUS, aes(x = Species, y = count, fill = ID)) + 
+  geom_bar(stat = "identity") +
+  scale_x_discrete(limits = c("Physcomitrella patens", "Selaginella moellendorffii", # non-flowering plants
+                              "Amborella trichopoda", "Nymphaea colorata", # Magnoliopsida
+                              "Dioscorea rotundata", "Asparagus officinalis", "Dendrobium catenatum", "Phalaenopsis equestris", # Liliopsida, Petrosaviidae
+                              "Elaeis guineensis", "Phoenix dactylifera", # Liliopsida, Petrosaviidae, Arecales 
+                              "Musa acuminata", # Liliopsida, Petrosaviidae, Zingiberales
+                              "Ananas comosus", # Liliopsida, Petrosaviidae, Poales, Bromeliaceae 
+                              "Panicum hallii", "Panicum virgatum", "Setaria italica", "Setaria viridis", "Sorghum bicolor", "Zea mays", # Liliopsida, Petrosaviidae, Poales, Poaceae, PACMAD clade
+                              "Oryza brachyantha", "Oryza sativa", "Brachypodium distachyon", "Aegilops tauschii", "Triticum dicoccoides", # Liliopsida, Petrosaviidae, Poales, Poaceae, BOP clade
+                              "Nelumbo nucifera", "Papaver somniferum", # Eudicotyledons
+                              "Beta vulgaris", "Chenopodium quinoa", "Spinacia oleracea", # Eudicotyledons, Superasterids, Caryophyllales
+                              "Camellia sinensis", # Eudicotyledons, Superasterids, Asterids, Ericales
+                              "Daucus carota", "Cynara cardunculus", "Helianthus annuus", "Lactuca sativa", # Eudicotyledons, Superasterids, Asterids, campanulids
+                              "Coffea eugenioides", "Coffea arabica", # Eudicotyledons, Superasterids, Asterids, Lamiids, Gentianales
+                              "Olea europaea", "Sesamum indicum", "Erythranthe guttata", # Eudicotyledons, Superasterids, Asterids, Lamiids, Lamiales
+                              "Ipomoea nil", "Ipomoea triloba", # Eudicotyledons, Superasterids, Asterids, Lamiids, Solanales, Convolvulaceae
+                              "Nicotiana tomentosiformis", "Nicotiana sylvestris", "Nicotiana tabacum", "Nicotiana attenuata", "Capsicum annuum", "Solanum tuberosum", "Solanum pennellii", "Solanum lycopersicum", # Eudicotyledons, Superasterids, Asterids, Lamiids, Solanales, Solanaceae
+                              "Vitis riparia", "Vitis vinifera", # Eudicotyledons, Rosids, rosids incertae sedis, Vitales
+                              "Tripterygium wilfordii", # Eudicotyledons, Rosids, Fabids, Celastrales
+                              "Hevea brasiliensis", "Jatropha curcas", "Manihot esculenta", "Ricinus communis", "Populus trichocarpa", "Populus euphratica", "Populus alba", # Eudicotyledons, Rosids, Fabids, Malpighiales
+                              "Prosopis alba", "Lupinus angustifolius", "Arachis hypogaea", "Arachis duranensis", "Arachis ipaensis", "Cicer arietinum", "Medicago truncatula", "Abrus precatorius", "Vigna radiata", "Vigna angularis", "Vigna unguiculata", "Cajanus cajan", "Phaseolus vulgaris", "Glycine soja", "Glycine max", # Eudicotyledons, Rosids, Fabids, Fabales
+                              "Fragaria vesca", "Rosa chinensis", "Pyrus x bretschneideri", "Malus domestica", "Prunus dulcis", "Prunus avium", "Prunus mume", "Prunus persica", "Ziziphus jujuba", "Cannabis sativa", "Morus notabilis", # Eudicotyledons, Rosids, Fabids, Rosales
+                              "Juglans regia", "Juglans microcarpa x Juglans regia", "Quercus lobata", "Quercus suber", # Eudicotyledons, Rosids, Fabids, Fagales
+                              "Momordica charantia", "Cucurbita pepo", "Cucurbita moschata", "Cucurbita maxima", "Benincasa hispida", "Cucumis melo", "Cucumis sativus", # Eudicotyledons, Rosids, Fabids, Cucurbitales
+                              "Punica granatum", "Rhodamnia argentea", "Syzygium oleosum", "Eucalyptus grandis", # Eudicotyledons, Rosids, Malvids, Myrtales
+                              "Pistacia vera", "Citrus sinensis", "Citrus clementina", # Eudicotyledons, Rosids, Malvids, Sapindales
+                              "Durio zibethinus", "Herrania umbratica", "Theobroma cacao", "Hibiscus syriacus", "Gossypium arboreum", "Gossypium raimondii", "Gossypium hirsutum", # Eudicotyledons, Rosids, Malvids, Malvales
+                              "Tarenaya hassleriana", "Carica papaya", "Eutrema salsugineum", "Raphanus sativus", "Brassica rapa", "Brassica napus", "Brassica oleracea", "Capsella rubella", "Camelina sativa", "Arabidopsis lyrata", "Arabidopsis thaliana" # Eudicotyledons, Rosids, Malvids, Brassicales
+                              )) + 
+  scale_y_continuous(breaks = c(0, 250, 500, 750, 1000, 1250)) +
+  scale_fill_manual(values = c("YES" = "#F0027F", "NO" = "#386CB0")) + 
+  coord_flip() +
+  theme(panel.background = element_rect(fill = NA),
+        panel.grid.major = element_line(colour = "#BFBFBF", size = 0.6),
+        panel.grid.major.y = element_line(colour = NA),
+        axis.line.x = element_line(color = "#BFBFBF", size = 0.6),
+        axis.ticks.x = element_line(color = "#BFBFBF", size = 0.6),
+        axis.ticks.y = element_line(color = "#BFBFBF", size = 0.6),
+        axis.text.y = element_text(angle = 0, hjust = 1, size = 8),
+        axis.title.y=element_blank())
+```
+
+We can also plot the types of integrated domains found
+
+```{r, message=FALSE}
+RefSeq_NLR_ID_DEDUP <- RefSeq_NLR %>%
+  filter(!grepl("SUPPRESSED", Species), # Remove the suppressed RefSeq genomes
+         Status %in% c("NLR", "degenerate NLR"), # Filter for NLRs
+         grepl("O", Domain_simplified), # Extract NLRs containing a potential integrated domain
+         !type %in% c("CHAIN", "MOTIF", "REGION")) %>% # Remove CHAIN and MOTIF and REGION (canonical NLR domains)
+  separate_rows(Domain, sep = "\\)\\(") %>% # Separate out the domains
+  mutate(Domain = str_replace(Domain, "\\(", ""),
+         Domain = str_replace(Domain, "\\)", "")) %>%
+  filter(!Domain %in% c("R1", "RPW8", "TIR", "CC", "NBARC", "PLOOP", "LRR", "CJID")) %>% # Remove the canonical NLR domains from the domain architecture analysis
+  group_by(RefSeq, Locus) %>%
+  distinct(Domain, .keep_all = TRUE) %>% # Deduplicate the integrated domains per locus. 
+  group_by(RefSeq, Species, Domain) %>%
+  summarise(count = n()) %>% 
+  mutate(perc = (count/sum(count))*100,
+         Domain = factor(Domain, levels = c("WRKY", "TRX", "PLOOP-OTHER", "PKin", "HMA", "Exo70", "BED", "a/b", "JAC", "BRX", "WD40", "TPR", "ARM", "ANK", "OTHER", "TRANSPOSON")))
+
+head(RefSeq_NLR_ID_DEDUP)
+
+ggplot(data = RefSeq_NLR_ID_DEDUP, aes(x = Species, y = count, fill = Domain)) + 
+  geom_bar(stat = "identity") +
+  scale_x_discrete(limits = c("Physcomitrella patens", "Selaginella moellendorffii", # non-flowering plants
+                              "Amborella trichopoda", "Nymphaea colorata", # Magnoliopsida
+                              "Dioscorea rotundata", "Asparagus officinalis", "Dendrobium catenatum", "Phalaenopsis equestris", # Liliopsida, Petrosaviidae
+                              "Elaeis guineensis", "Phoenix dactylifera", # Liliopsida, Petrosaviidae, Arecales 
+                              "Musa acuminata", # Liliopsida, Petrosaviidae, Zingiberales
+                              "Ananas comosus", # Liliopsida, Petrosaviidae, Poales, Bromeliaceae 
+                              "Panicum hallii", "Panicum virgatum", "Setaria italica", "Setaria viridis", "Sorghum bicolor", "Zea mays", # Liliopsida, Petrosaviidae, Poales, Poaceae, PACMAD clade
+                              "Oryza brachyantha", "Oryza sativa", "Brachypodium distachyon", "Aegilops tauschii", "Triticum dicoccoides", # Liliopsida, Petrosaviidae, Poales, Poaceae, BOP clade
+                              "Nelumbo nucifera", "Papaver somniferum", # Eudicotyledons
+                              "Beta vulgaris", "Chenopodium quinoa", "Spinacia oleracea", # Eudicotyledons, Superasterids, Caryophyllales
+                              "Camellia sinensis", # Eudicotyledons, Superasterids, Asterids, Ericales
+                              "Daucus carota", "Cynara cardunculus", "Helianthus annuus", "Lactuca sativa", # Eudicotyledons, Superasterids, Asterids, campanulids
+                              "Coffea eugenioides", "Coffea arabica", # Eudicotyledons, Superasterids, Asterids, Lamiids, Gentianales
+                              "Olea europaea", "Sesamum indicum", "Erythranthe guttata", # Eudicotyledons, Superasterids, Asterids, Lamiids, Lamiales
+                              "Ipomoea nil", "Ipomoea triloba", # Eudicotyledons, Superasterids, Asterids, Lamiids, Solanales, Convolvulaceae
+                              "Nicotiana tomentosiformis", "Nicotiana sylvestris", "Nicotiana tabacum", "Nicotiana attenuata", "Capsicum annuum", "Solanum tuberosum", "Solanum pennellii", "Solanum lycopersicum", # Eudicotyledons, Superasterids, Asterids, Lamiids, Solanales, Solanaceae
+                              "Vitis riparia", "Vitis vinifera", # Eudicotyledons, Rosids, rosids incertae sedis, Vitales
+                              "Tripterygium wilfordii", # Eudicotyledons, Rosids, Fabids, Celastrales
+                              "Hevea brasiliensis", "Jatropha curcas", "Manihot esculenta", "Ricinus communis", "Populus trichocarpa", "Populus euphratica", "Populus alba", # Eudicotyledons, Rosids, Fabids, Malpighiales
+                              "Prosopis alba", "Lupinus angustifolius", "Arachis hypogaea", "Arachis duranensis", "Arachis ipaensis", "Cicer arietinum", "Medicago truncatula", "Abrus precatorius", "Vigna radiata", "Vigna angularis", "Vigna unguiculata", "Cajanus cajan", "Phaseolus vulgaris", "Glycine soja", "Glycine max", # Eudicotyledons, Rosids, Fabids, Fabales
+                              "Fragaria vesca", "Rosa chinensis", "Pyrus x bretschneideri", "Malus domestica", "Prunus dulcis", "Prunus avium", "Prunus mume", "Prunus persica", "Ziziphus jujuba", "Cannabis sativa", "Morus notabilis", # Eudicotyledons, Rosids, Fabids, Rosales
+                              "Juglans regia", "Juglans microcarpa x Juglans regia", "Quercus lobata", "Quercus suber", # Eudicotyledons, Rosids, Fabids, Fagales
+                              "Momordica charantia", "Cucurbita pepo", "Cucurbita moschata", "Cucurbita maxima", "Benincasa hispida", "Cucumis melo", "Cucumis sativus", # Eudicotyledons, Rosids, Fabids, Cucurbitales
+                              "Punica granatum", "Rhodamnia argentea", "Syzygium oleosum", "Eucalyptus grandis", # Eudicotyledons, Rosids, Malvids, Myrtales
+                              "Pistacia vera", "Citrus sinensis", "Citrus clementina", # Eudicotyledons, Rosids, Malvids, Sapindales
+                              "Durio zibethinus", "Herrania umbratica", "Theobroma cacao", "Hibiscus syriacus", "Gossypium arboreum", "Gossypium raimondii", "Gossypium hirsutum", # Eudicotyledons, Rosids, Malvids, Malvales
+                              "Tarenaya hassleriana", "Carica papaya", "Eutrema salsugineum", "Raphanus sativus", "Brassica rapa", "Brassica napus", "Brassica oleracea", "Capsella rubella", "Camelina sativa", "Arabidopsis lyrata", "Arabidopsis thaliana" # Eudicotyledons, Rosids, Malvids, Brassicales
+                              )) + 
+  scale_fill_manual(values = colorRampPalette(RColorBrewer::brewer.pal(12, "Accent"))(length(unique(RefSeq_NLR_ID_DEDUP$Domain)))) +
+  scale_y_continuous(breaks = c(0, 25, 50, 75, 100)) +
+  coord_flip() +
+  theme(panel.background = element_rect(fill = NA),
+        panel.grid.major = element_line(colour = "#BFBFBF", size = 0.6),
+        panel.grid.major.y = element_line(colour = NA),
+        axis.line.x = element_line(color = "#BFBFBF", size = 0.6),
+        axis.ticks.x = element_line(color = "#BFBFBF", size = 0.6),
+        axis.ticks.y = element_line(color = "#BFBFBF", size = 0.6),
+        axis.text.y = element_text(angle = 0, hjust = 1, size = 8),
+        axis.title.y=element_blank())
+``` 
+
