@@ -1,0 +1,85 @@
+---
+title: "Drawing NLR domain architecture with refplantnlR"
+author: "Jiorgos Kourelis"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+output: 
+  github_document:
+    html_preview: false
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.path = "man/figures/README-",
+  out.width = "100%"
+)
+```
+
+# refplantnlR
+
+`refplantnlR` is a package for drawing NLR domain architecture. Either provide it with the NLRtracker output, or load the RefPlantNLR dataset or NCBI RefSeq NLR dataset and the function does (most of) the rest!
+
+
+## Installation
+
+To install you'll need the `devtools` R package. From the R console in RStudio type 
+
+```{r, eval=FALSE}
+install.packages("devtools")
+```
+
+Once `devtools` is installed you can use that to install `mogo`
+
+```{r,eval=FALSE}
+devtools::install_github("JKourelis/refplantnlR")
+```
+
+## Preparation
+
+The first step is to load our domain architecture data file and do some basic filtering
+
+### Data loading
+
+First read in your domain file output from NLRtracker. You can do that with `read.delim()`. Minimally it should contain the gene ID, the log fold change and the $p$-value.
+
+```{r, message=FALSE}
+library(dplyr)
+library(refplantnlR)
+RefPlantNLR <- RefPlantNLR
+head(RefPlantNLR)
+```
+
+### Filter as required
+
+We can now filter the NLRs to select only the ones with e.g integrated domains, using `filter()`
+
+```{r, message=FALSE}
+filtered_RefPlantNLR <- filter(RefPlantNLR, grepl("O", Domain_simplified),
+                               Status == "NLR")
+head(filtered_RefPlantNLR)
+```
+
+### Draw the NLR domain architecture
+
+We can now draw the domain architecture 
+
+```{r, message=FALSE, fig.height=12, fig.width=12}
+p <- draw_nlr(filtered_RefPlantNLR)
+p
+```
+We can modify the output to also plot the NB-ARC motifs
+
+```{r, message=FALSE, fig.height=5, fig.width=10}
+filtered_RefPlantNLR <- filter(RefPlantNLR, Subclass == "CCR-NLR")
+p <- draw_nlr(filtered_RefPlantNLR, label_motifs = TRUE)
+p
+```
+
+Finally, specifically for the RefPlantNLR dataset we can also label the individual LRRs
+
+```{r, message=FALSE, fig.height=8, fig.width=10}
+filtered_RefPlantNLR <- filter(RefPlantNLR, Subclass == "CCG10-NLR")
+p <- draw_nlr(filtered_RefPlantNLR, label_repeats = TRUE)
+p
+```
