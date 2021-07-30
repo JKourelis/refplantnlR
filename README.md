@@ -96,8 +96,9 @@ p <- draw_nlr(filtered_RefPlantNLR)
 p
 ```
 
-<img src="man/figures/README-unnamed-chunk-6-1.png" width="100%" /> We
-can modify the output to also plot the NB-ARC motifs
+<img src="man/figures/README-unnamed-chunk-6-1.png" width="100%" />
+
+We can modify the output to also plot the NB-ARC motifs
 
 ``` r
 filtered_RefPlantNLR <- filter(RefPlantNLR, Subclass == "CCR-NLR")
